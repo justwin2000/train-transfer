@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>複数区間 運賃・時間比較</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-12 font-sans">
+
+  <header class="bg-slate-800 border-b border-slate-700 p-4 text-center shadow-lg">
+    <h1 class="text-xl font-bold text-emerald-400">
+      <i class="fa-solid fa-route mr-2"></i>複数区間 運賃・時間比較
+    </h1>
+  </header>
+
+  <main class="max-w-3xl mx-auto p-4 space-y-6">
+
+    <section class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-md">
+      <h2 class="text-md font-semibold text-slate-300 mb-4 border-b border-slate-700 pb-2">
+        <i class="fa-solid fa-sliders mr-2 text-emerald-400"></i>検索条件
+      </h2>
+
+      <div class="mb-5">
+        <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">
+          固定駅（乗車 / 降車）
+        </label>
+        <div class="relative">
+          <input type="text" id="fixedStation" value="新大阪" 
+            placeholder="例: 新大阪" 
+            oninput="handleInput(this, 'fixedCandidate')"
+            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-bold">
+          <div id="fixedCandidate" class="absolute z-10 left-0 right-0 bg-slate-800 border border-slate-600 rounded-b-lg hidden shadow-xl max-h-40 overflow-y-auto mt-1"></div>
+        </div>
+      </div>
+
+      <div class="mb-5">
+        <div class="flex justify-between items-center mb-2">
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+            比較したい駅（複数選択）
+          </label>
+          <button onclick="addTargetInput()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded transition flex items-center gap-1">
+            <i class="fa-solid fa-plus"></i> 駅を追加
+          </button>
+        </div>
+        
+        <div id="targetStationsContainer" class="space-y-2">
+          </div>
+      </div>
+
+      <button onclick="searchRoutes()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-lg shadow-lg transition duration-200 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-magnifying-glass"></i> 一覧比較する
+      </button>
+    </section>
+
+    <section id="resultSection" class="hidden space-y-4">
+      <h2 class="text-md font-semibold text-slate-300 border-b border-slate-700 pb-2 flex justify-between items-center">
+        <span><i class="fa-solid fa-list-check mr-2 text-emerald-400"></i>比較結果</span>
+        <span id="resultCount" class="text-xs text-slate-400"></span>
+      </h2>
+
+      <div id="resultCards" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        </div>
+    </section>
+
+  </main>
+
+  <script>
+    // 1. あいまい検索用の簡易辞書（エイリアス -> 標準表示名）
+    const stationAliases = {
+      "三ノ宮": "三ノ宮", "三宮": "三ノ宮", "神戸三宮": "三ノ宮",
+      "梅田": "大阪・梅田", "大阪": "大阪・梅田", "東梅田": "大阪・梅田", "西梅田": "大阪・梅田",
+      "難波": "なんば", "なんば": "なんば", "大阪難波": "なんば",
+      "新大阪": "新大阪", "心斎橋": "心斎橋", "西大橋": "西大橋", "本町": "本町"
+    };
+
+    // ダミーの運賃・所要時間データ（プロトタイプ用）
+    const dummyDatabase = {
+      "新大阪-心斎橋": { time: 20, fare: 300 },
+      "新大阪-西大橋": { time: 25, fare: 350 },
+      "新大阪-本町": { time: 18, fare: 280 },
+      "新大阪-三ノ宮": { time: 32, fare: 560 },
+      "新大阪-大阪・梅田": { time: 5, fare: 170 },
+      "新大阪-なんば": { time: 15, fare: 290 }
+    };
+
+    let targetCount = 0;
+
+    // 初期化：入力欄を3つ生成
+    window.onload = () => {
+      const initialTargets = ["心斎橋", "西大橋", "本町"];
+      initialTargets.forEach(val => addTargetInput(val));
+    };
+
+    // 比較駅の入力欄を追加する関数
+    function addTargetInput(defaultValue = "") {
+      targetCount++;
+      const id = `target_${targetCount}`;
+      const candidateId = `candidate_${targetCount}`;
+      
+      const container = document.getElementById("targetStationsContainer");
+      const div = document.createElement("div");
+      div.className = "flex gap-2 items-center relative";
+      div.id = `group_${id}`;
+      
+      div.innerHTML = `
+        <div class="relative flex-1">
+          <input type="text" id="${id}" value="${defaultValue}" placeholder="例: 心斎橋" 
+            oninput="handleInput(this, '${candidateId}')"
+            class="target-input w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+          <div id="${candidateId}" class="absolute z-10 left-0 right-0 bg-slate-800 border border-slate-600 rounded-b-lg hidden shadow-xl max-h-32 overflow-y-auto mt-1"></div>
+        </div>
+        <button onclick="removeTargetInput('group_${id}')" class="text-slate-500 hover:text-rose-400 p-2 transition">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      `;
+      container.appendChild(div);
+    }
+
+    // 入力欄削除
+    function removeTargetInput(groupId) {
+      const container = document.getElementById("targetStationsContainer");
+      if (container.children.length > 1) {
+        document.getElementById(groupId).remove();
+      }
+    }
+
+    // 2. あいまい検索・候補表示ロジック
+    function handleInput(inputElem, candidateBoxId) {
+      const query = inputElem.value.trim();
+      const box = document.getElementById(candidateBoxId);
+      box.innerHTML = "";
+
+      if (!query) {
+        box.classList.add("hidden");
+        return;
+      }
+
+      // 辞書のキーまたは値から部分一致検索
+      const matches = Object.keys(stationAliases).filter(key => key.includes(query));
+
+      if (matches.length > 0) {
+        box.classList.remove("hidden");
+        matches.forEach(match => {
+          const canonicalName = stationAliases[match];
+          const item = document.createElement("div");
+          item.className = "px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm flex justify-between items-center";
+          item.innerHTML = `<span>${match}</span><span class="text-xs text-slate-400">（${canonicalName}）</span>`;
+          item.onclick = () => {
+            inputElem.value = match; // 入力補完
+            box.classList.add("hidden");
+          };
+          box.appendChild(item);
+        });
+      } else {
+        box.classList.add("hidden");
+      }
+    }
+
+    // 3. 検索および結果描画ロジック
+    function searchRoutes() {
+      const fixedVal = document.getElementById("fixedStation").value.trim();
+      const targetInputs = document.querySelectorAll(".target-input");
+      const cardsContainer = document.getElementById("resultCards");
+      cardsContainer.innerHTML = "";
+
+      if (!fixedVal) {
+        alert("固定駅を入力してください");
+        return;
+      }
+
+      let count = 0;
+      targetInputs.forEach(input => {
+        const targetVal = input.value.trim();
+        if (!targetVal) return;
+
+        count++;
+        // あいまい検索で正規化（該当がなければ入力値をそのまま使用）
+        const normalizedFixed = stationAliases[fixedVal] || fixedVal;
+        const normalizedTarget = stationAliases[targetVal] || targetVal;
+
+        // ダミーDBからの検索（またはランダム生成）
+        const key = `${normalizedFixed}-${normalizedTarget}`;
+        const routeData = dummyDatabase[key] || {
+          time: Math.floor(Math.random() * 20) + 10,
+          fare: (Math.floor(Math.random() * 3) + 2) * 100
+        };
+
+        // Yahoo!乗換案内URL生成
+        const yahooUrl = `https://transit.yahoo.co.jp/search/result?from=${encodeURIComponent(fixedVal)}&to=${encodeURIComponent(targetVal)}`;
+
+        // カードUI作成（添付画像のデザインを再現）
+        const card = document.createElement("div");
+        card.className = "bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md flex flex-col justify-between items-center text-center space-y-3";
+        
+        card.innerHTML = `
+          <div class="w-full bg-white text-slate-950 font-bold py-1.5 px-3 rounded shadow-sm text-sm">
+            ${fixedVal}
+          </div>
+
+          <div class="flex flex-col items-center my-1">
+            <span class="text-lg font-bold text-white mb-0.5">${routeData.time} 分</span>
+            <i class="fa-solid fa-arrow-down text-slate-400 text-xl"></i>
+          </div>
+
+          <div class="w-full bg-white text-slate-950 font-bold py-1.5 px-3 rounded shadow-sm text-sm">
+            ${targetVal}
+          </div>
+
+          <div class="text-xl font-extrabold text-emerald-400">
+            ¥${routeData.fare}
+          </div>
+
+          <a href="${yahooUrl}" target="_blank" rel="noopener noreferrer" 
+            class="w-full mt-2 text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-2 rounded border border-slate-600 transition flex items-center justify-center gap-1">
+            Yahoo!乗換案内 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+          </a>
+        `;
+
+        cardsContainer.appendChild(card);
+      });
+
+      if (count > 0) {
+        document.getElementById("resultCount").innerText = `${count}件の比較`;
+        document.getElementById("resultSection").classList.remove("hidden");
+      }
+    }
+  </script>
+</body>
+</html>
