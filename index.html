@@ -4,24 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>複数区間 運賃・時間比較</title>
+  <!-- Tailwind CSS (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome (アイコン用) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen pb-12 font-sans">
 
+  <!-- ヘッダー -->
   <header class="bg-slate-800 border-b border-slate-700 p-4 text-center shadow-lg">
     <h1 class="text-xl font-bold text-emerald-400">
       <i class="fa-solid fa-route mr-2"></i>複数区間 運賃・時間比較
     </h1>
   </header>
 
-  <main class="max-w-3xl mx-auto p-4 space-y-6">
+  <main class="max-w-xl mx-auto p-4 space-y-6">
 
+    <!-- 条件設定エリア -->
     <section class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-md">
       <h2 class="text-md font-semibold text-slate-300 mb-4 border-b border-slate-700 pb-2">
         <i class="fa-solid fa-sliders mr-2 text-emerald-400"></i>検索条件
       </h2>
 
+      <!-- 固定駅 -->
       <div class="mb-5">
         <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">
           固定駅（乗車 / 降車）
@@ -35,6 +40,7 @@
         </div>
       </div>
 
+      <!-- 比較駅一覧 -->
       <div class="mb-5">
         <div class="flex justify-between items-center mb-2">
           <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -46,22 +52,27 @@
         </div>
         
         <div id="targetStationsContainer" class="space-y-2">
-          </div>
+          <!-- JSで初期3つを動的生成 -->
+        </div>
       </div>
 
+      <!-- 検索ボタン -->
       <button onclick="searchRoutes()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-lg shadow-lg transition duration-200 flex items-center justify-center gap-2">
         <i class="fa-solid fa-magnifying-glass"></i> 一覧比較する
       </button>
     </section>
 
+    <!-- 結果表示エリア -->
     <section id="resultSection" class="hidden space-y-4">
       <h2 class="text-md font-semibold text-slate-300 border-b border-slate-700 pb-2 flex justify-between items-center">
         <span><i class="fa-solid fa-list-check mr-2 text-emerald-400"></i>比較結果</span>
         <span id="resultCount" class="text-xs text-slate-400"></span>
       </h2>
 
-      <div id="resultCards" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        </div>
+      <!-- 【縦割りレイアウト】 flex-col で縦1列に並べます -->
+      <div id="resultCards" class="flex flex-col gap-4">
+        <!-- JSでカードを動的出力 -->
+      </div>
     </section>
 
   </main>
@@ -126,7 +137,7 @@
       }
     }
 
-    // 2. あいまい検索・候補表示ロジック
+    // あいまい検索・候補表示ロジック
     function handleInput(inputElem, candidateBoxId) {
       const query = inputElem.value.trim();
       const box = document.getElementById(candidateBoxId);
@@ -137,7 +148,6 @@
         return;
       }
 
-      // 辞書のキーまたは値から部分一致検索
       const matches = Object.keys(stationAliases).filter(key => key.includes(query));
 
       if (matches.length > 0) {
@@ -148,7 +158,7 @@
           item.className = "px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm flex justify-between items-center";
           item.innerHTML = `<span>${match}</span><span class="text-xs text-slate-400">（${canonicalName}）</span>`;
           item.onclick = () => {
-            inputElem.value = match; // 入力補完
+            inputElem.value = match;
             box.classList.add("hidden");
           };
           box.appendChild(item);
@@ -158,7 +168,7 @@
       }
     }
 
-    // 3. 検索および結果描画ロジック
+    // 検索および結果描画ロジック
     function searchRoutes() {
       const fixedVal = document.getElementById("fixedStation").value.trim();
       const targetInputs = document.querySelectorAll(".target-input");
@@ -176,46 +186,48 @@
         if (!targetVal) return;
 
         count++;
-        // あいまい検索で正規化（該当がなければ入力値をそのまま使用）
         const normalizedFixed = stationAliases[fixedVal] || fixedVal;
         const normalizedTarget = stationAliases[targetVal] || targetVal;
 
-        // ダミーDBからの検索（またはランダム生成）
         const key = `${normalizedFixed}-${normalizedTarget}`;
         const routeData = dummyDatabase[key] || {
           time: Math.floor(Math.random() * 20) + 10,
           fare: (Math.floor(Math.random() * 3) + 2) * 100
         };
 
-        // Yahoo!乗換案内URL生成
+        // Yahoo!乗換案内（Web）への検索URLを生成
         const yahooUrl = `https://transit.yahoo.co.jp/search/result?from=${encodeURIComponent(fixedVal)}&to=${encodeURIComponent(targetVal)}`;
 
-        // カードUI作成（添付画像のデザインを再現）
+        // 縦割りレイアウト用カード
         const card = document.createElement("div");
-        card.className = "bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md flex flex-col justify-between items-center text-center space-y-3";
+        card.className = "bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4";
         
         card.innerHTML = `
-          <div class="w-full bg-white text-slate-950 font-bold py-1.5 px-3 rounded shadow-sm text-sm">
-            ${fixedVal}
+          <!-- 乗車駅・目的地と矢印 -->
+          <div class="flex items-center gap-3 w-full sm:w-auto justify-center">
+            <div class="bg-white text-slate-950 font-bold py-1.5 px-3 rounded text-sm text-center min-w-[90px]">
+              ${fixedVal}
+            </div>
+            <div class="flex flex-col items-center">
+              <span class="text-xs font-bold text-emerald-400">${routeData.time}分</span>
+              <i class="fa-solid fa-arrow-right text-slate-400 text-sm hidden sm:inline"></i>
+              <i class="fa-solid fa-arrow-down text-slate-400 text-sm sm:hidden"></i>
+            </div>
+            <div class="bg-white text-slate-950 font-bold py-1.5 px-3 rounded text-sm text-center min-w-[90px]">
+              ${targetVal}
+            </div>
           </div>
 
-          <div class="flex flex-col items-center my-1">
-            <span class="text-lg font-bold text-white mb-0.5">${routeData.time} 分</span>
-            <i class="fa-solid fa-arrow-down text-slate-400 text-xl"></i>
+          <!-- 運賃と乗換案内リンク -->
+          <div class="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-t-0 border-slate-700 pt-3 sm:pt-0">
+            <div class="text-lg font-extrabold text-emerald-400">
+              ¥${routeData.fare}
+            </div>
+            <a href="${yahooUrl}" target="_blank" rel="noopener noreferrer" 
+              class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded transition flex items-center gap-1 shadow">
+              乗換案内を見る <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
           </div>
-
-          <div class="w-full bg-white text-slate-950 font-bold py-1.5 px-3 rounded shadow-sm text-sm">
-            ${targetVal}
-          </div>
-
-          <div class="text-xl font-extrabold text-emerald-400">
-            ¥${routeData.fare}
-          </div>
-
-          <a href="${yahooUrl}" target="_blank" rel="noopener noreferrer" 
-            class="w-full mt-2 text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-2 rounded border border-slate-600 transition flex items-center justify-center gap-1">
-            Yahoo!乗換案内 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-          </a>
         `;
 
         cardsContainer.appendChild(card);
