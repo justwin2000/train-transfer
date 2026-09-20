@@ -10,16 +10,29 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* スポーツグラフィック風 背景アクセント（細いレッド斜め3本線） */
+    /* 
+      スポーツグラフィック風 背景アクセント
+      ハッキリとした太さのある赤（#D92626 / 不透明度75%）の「明確な3本線」のみを配置
+    */
     .bg-sports-accent {
       background-image: repeating-linear-gradient(
         -45deg,
-        transparent,
-        transparent 15px,
-        rgba(217, 38, 38, 0.15) 15px,
-        rgba(217, 38, 38, 0.15) 16.5px
+        transparent 0px,
+        transparent 16px,
+        rgba(217, 38, 38, 0.75) 16px,
+        rgba(217, 38, 38, 0.75) 24px, /* 線幅 8px */
+        transparent 24px,
+        transparent 36px,              /* 線間隔 12px */
+        rgba(217, 38, 38, 0.75) 36px,
+        rgba(217, 38, 38, 0.75) 44px, /* 線幅 8px */
+        transparent 44px,
+        transparent 56px,              /* 線間隔 12px */
+        rgba(217, 38, 38, 0.75) 56px,
+        rgba(217, 38, 38, 0.75) 64px, /* 線幅 8px */
+        transparent 64px,
+        transparent 100%               /* 以降は線を出さず3本のみに限定 */
       );
-      background-size: 200px 200px;
+      background-size: 320px 320px;
       background-position: right top;
       background-repeat: no-repeat;
     }
@@ -51,15 +64,15 @@
 
     <!-- 条件設定エリア -->
     <section class="bg-[#101D36] rounded-xl p-5 border border-[#1E2E4A] shadow-2xl relative overflow-hidden">
-      <!-- 控えめなスポーツアクセント用背景ライン -->
-      <div class="absolute top-0 right-0 w-24 h-full pointer-events-none opacity-20 bg-sports-accent"></div>
+      <!-- カード右上にくっきり3本線を配置 -->
+      <div class="absolute top-0 right-0 w-32 h-32 pointer-events-none bg-sports-accent"></div>
 
-      <h2 class="text-sm font-bold text-[#F0C85A] uppercase tracking-wider mb-4 border-b border-[#1E2E4A] pb-2 flex items-center gap-2">
+      <h2 class="text-sm font-bold text-[#F0C85A] uppercase tracking-wider mb-4 border-b border-[#1E2E4A] pb-2 flex items-center gap-2 relative z-10">
         <i class="fa-solid fa-sliders text-[#D9AA32]"></i>検索条件
       </h2>
 
       <!-- 固定駅 -->
-      <div class="mb-5">
+      <div class="mb-5 relative z-10">
         <label class="block text-xs font-bold text-[#9AA8BF] uppercase tracking-wider mb-1.5">
           固定駅（乗車 / 降車）
         </label>
@@ -73,7 +86,7 @@
       </div>
 
       <!-- 比較駅一覧 -->
-      <div class="mb-5">
+      <div class="mb-5 relative z-10">
         <div class="flex justify-between items-center mb-2">
           <label class="block text-xs font-bold text-[#9AA8BF] uppercase tracking-wider">
             比較したい駅（複数選択）
@@ -89,7 +102,7 @@
       </div>
 
       <!-- 検索ボタン -->
-      <button onclick="searchRoutes()" class="w-full bg-gradient-to-r from-[#D9AA32] to-[#F0C85A] hover:brightness-110 text-[#080F20] font-extrabold py-3.5 rounded-lg shadow-lg transition duration-200 flex items-center justify-center gap-2 text-base active:scale-[0.99]">
+      <button onclick="searchRoutes()" class="w-full relative z-10 bg-gradient-to-r from-[#D9AA32] to-[#F0C85A] hover:brightness-110 text-[#080F20] font-extrabold py-3.5 rounded-lg shadow-lg transition duration-200 flex items-center justify-center gap-2 text-base active:scale-[0.99]">
         <i class="fa-solid fa-magnifying-glass"></i> 一覧比較する
       </button>
     </section>
@@ -101,10 +114,7 @@
         <span id="resultCount" class="text-xs text-[#9AA8BF]"></span>
       </h2>
 
-      <!-- 
-        【縦長カードの横並び配置】
-        スマホ画面で1画面に3つの縦長カードが収まるよう、grid-cols-3 / 横スクロール（overflow-x-auto）に対応
-      -->
+      <!-- スマホ1画面に3つの縦長カードが収まるレイアウト -->
       <div class="overflow-x-auto horizontal-scroll-container pb-3 pt-1">
         <div id="resultCards" class="grid grid-flow-col auto-cols-[calc(33.333%-8px)] min-w-full gap-3">
           <!-- JSで縦長カードを動的出力 -->
