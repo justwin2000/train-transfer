@@ -8,70 +8,107 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome (アイコン用) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* スポーツグラフィック風 背景アクセント（細いレッド斜め3本線） */
+    .bg-sports-accent {
+      background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 15px,
+        rgba(217, 38, 38, 0.15) 15px,
+        rgba(217, 38, 38, 0.15) 16.5px
+      );
+      background-size: 200px 200px;
+      background-position: right top;
+      background-repeat: no-repeat;
+    }
+
+    /* カスタムスクロールバー（横スクロール用） */
+    .horizontal-scroll-container::-webkit-scrollbar {
+      height: 6px;
+    }
+    .horizontal-scroll-container::-webkit-scrollbar-track {
+      background: #080F20;
+      border-radius: 4px;
+    }
+    .horizontal-scroll-container::-webkit-scrollbar-thumb {
+      background: #D9AA32;
+      border-radius: 4px;
+    }
+  </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen pb-12 font-sans">
+<body class="bg-[#080F20] text-slate-100 min-h-screen pb-12 font-sans relative overflow-x-hidden bg-sports-accent">
 
   <!-- ヘッダー -->
-  <header class="bg-slate-800 border-b border-slate-700 p-4 text-center shadow-lg">
-    <h1 class="text-xl font-bold text-emerald-400">
-      <i class="fa-solid fa-route mr-2"></i>複数区間 運賃・時間比較
+  <header class="bg-[#0D1830] border-b border-[#1E2E4A] p-4 text-center shadow-xl relative z-10">
+    <h1 class="text-lg font-bold text-[#F0C85A] tracking-wider flex items-center justify-center gap-2">
+      <i class="fa-solid fa-route text-[#D9AA32]"></i>複数区間 運賃・時間比較
     </h1>
   </header>
 
-  <main class="max-w-xl mx-auto p-4 space-y-6">
+  <main class="max-w-md md:max-w-3xl mx-auto p-4 space-y-6 relative z-10">
 
     <!-- 条件設定エリア -->
-    <section class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-md">
-      <h2 class="text-md font-semibold text-slate-300 mb-4 border-b border-slate-700 pb-2">
-        <i class="fa-solid fa-sliders mr-2 text-emerald-400"></i>検索条件
+    <section class="bg-[#101D36] rounded-xl p-5 border border-[#1E2E4A] shadow-2xl relative overflow-hidden">
+      <!-- 控えめなスポーツアクセント用背景ライン -->
+      <div class="absolute top-0 right-0 w-24 h-full pointer-events-none opacity-20 bg-sports-accent"></div>
+
+      <h2 class="text-sm font-bold text-[#F0C85A] uppercase tracking-wider mb-4 border-b border-[#1E2E4A] pb-2 flex items-center gap-2">
+        <i class="fa-solid fa-sliders text-[#D9AA32]"></i>検索条件
       </h2>
 
       <!-- 固定駅 -->
       <div class="mb-5">
-        <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">
+        <label class="block text-xs font-bold text-[#9AA8BF] uppercase tracking-wider mb-1.5">
           固定駅（乗車 / 降車）
         </label>
         <div class="relative">
           <input type="text" id="fixedStation" value="新大阪" 
             placeholder="例: 新大阪" 
             oninput="handleInput(this, 'fixedCandidate')"
-            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-bold">
-          <div id="fixedCandidate" class="absolute z-10 left-0 right-0 bg-slate-800 border border-slate-600 rounded-b-lg hidden shadow-xl max-h-40 overflow-y-auto mt-1"></div>
+            class="w-full bg-[#080F20] border border-[#233554] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#D9AA32] font-bold text-base transition">
+          <div id="fixedCandidate" class="absolute z-20 left-0 right-0 bg-[#162542] border border-[#233554] rounded-b-lg hidden shadow-2xl max-h-40 overflow-y-auto mt-1"></div>
         </div>
       </div>
 
       <!-- 比較駅一覧 -->
       <div class="mb-5">
         <div class="flex justify-between items-center mb-2">
-          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <label class="block text-xs font-bold text-[#9AA8BF] uppercase tracking-wider">
             比較したい駅（複数選択）
           </label>
-          <button onclick="addTargetInput()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded transition flex items-center gap-1">
-            <i class="fa-solid fa-plus"></i> 駅を追加
+          <button onclick="addTargetInput()" class="text-xs bg-[#162542] hover:bg-[#233554] text-[#F0C85A] border border-[#D9AA32]/40 px-3 py-1.5 rounded-md transition font-semibold flex items-center gap-1.5">
+            <i class="fa-solid fa-plus text-[10px]"></i> 駅を追加
           </button>
         </div>
         
-        <div id="targetStationsContainer" class="space-y-2">
+        <div id="targetStationsContainer" class="space-y-2.5">
           <!-- JSで初期3つを動的生成 -->
         </div>
       </div>
 
       <!-- 検索ボタン -->
-      <button onclick="searchRoutes()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-lg shadow-lg transition duration-200 flex items-center justify-center gap-2">
+      <button onclick="searchRoutes()" class="w-full bg-gradient-to-r from-[#D9AA32] to-[#F0C85A] hover:brightness-110 text-[#080F20] font-extrabold py-3.5 rounded-lg shadow-lg transition duration-200 flex items-center justify-center gap-2 text-base active:scale-[0.99]">
         <i class="fa-solid fa-magnifying-glass"></i> 一覧比較する
       </button>
     </section>
 
     <!-- 結果表示エリア -->
-    <section id="resultSection" class="hidden space-y-4">
-      <h2 class="text-md font-semibold text-slate-300 border-b border-slate-700 pb-2 flex justify-between items-center">
-        <span><i class="fa-solid fa-list-check mr-2 text-emerald-400"></i>比較結果</span>
-        <span id="resultCount" class="text-xs text-slate-400"></span>
+    <section id="resultSection" class="hidden space-y-3">
+      <h2 class="text-sm font-bold text-[#9AA8BF] border-b border-[#1E2E4A] pb-2 flex justify-between items-center">
+        <span><i class="fa-solid fa-list-check mr-2 text-[#F0C85A]"></i>比較結果</span>
+        <span id="resultCount" class="text-xs text-[#9AA8BF]"></span>
       </h2>
 
-      <!-- 【縦割りレイアウト】 flex-col で縦1列に並べます -->
-      <div id="resultCards" class="flex flex-col gap-4">
-        <!-- JSでカードを動的出力 -->
+      <!-- 
+        【縦長カードの横並び配置】
+        スマホ画面で1画面に3つの縦長カードが収まるよう、grid-cols-3 / 横スクロール（overflow-x-auto）に対応
+      -->
+      <div class="overflow-x-auto horizontal-scroll-container pb-3 pt-1">
+        <div id="resultCards" class="grid grid-flow-col auto-cols-[calc(33.333%-8px)] min-w-full gap-3">
+          <!-- JSで縦長カードを動的出力 -->
+        </div>
       </div>
     </section>
 
@@ -119,11 +156,11 @@
         <div class="relative flex-1">
           <input type="text" id="${id}" value="${defaultValue}" placeholder="例: 心斎橋" 
             oninput="handleInput(this, '${candidateId}')"
-            class="target-input w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
-          <div id="${candidateId}" class="absolute z-10 left-0 right-0 bg-slate-800 border border-slate-600 rounded-b-lg hidden shadow-xl max-h-32 overflow-y-auto mt-1"></div>
+            class="target-input w-full bg-[#080F20] border border-[#233554] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#D9AA32] transition">
+          <div id="${candidateId}" class="absolute z-20 left-0 right-0 bg-[#162542] border border-[#233554] rounded-b-lg hidden shadow-2xl max-h-32 overflow-y-auto mt-1"></div>
         </div>
-        <button onclick="removeTargetInput('group_${id}')" class="text-slate-500 hover:text-rose-400 p-2 transition">
-          <i class="fa-solid fa-trash-can"></i>
+        <button onclick="removeTargetInput('group_${id}')" class="text-[#9AA8BF] hover:text-rose-400 p-2 transition">
+          <i class="fa-solid fa-trash-can text-sm"></i>
         </button>
       `;
       container.appendChild(div);
@@ -155,8 +192,8 @@
         matches.forEach(match => {
           const canonicalName = stationAliases[match];
           const item = document.createElement("div");
-          item.className = "px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm flex justify-between items-center";
-          item.innerHTML = `<span>${match}</span><span class="text-xs text-slate-400">（${canonicalName}）</span>`;
+          item.className = "px-3 py-2 hover:bg-[#233554] cursor-pointer text-xs flex justify-between items-center border-b border-[#1E2E4A] last:border-0";
+          item.innerHTML = `<span class="text-white font-medium">${match}</span><span class="text-[10px] text-[#9AA8BF]">（${canonicalName}）</span>`;
           item.onclick = () => {
             inputElem.value = match;
             box.classList.add("hidden");
@@ -195,39 +232,45 @@
           fare: (Math.floor(Math.random() * 3) + 2) * 100
         };
 
-        // Yahoo!乗換案内（Web）への検索URLを生成
+        // Yahoo!乗換案内（Web）への検索URL生成
         const yahooUrl = `https://transit.yahoo.co.jp/search/result?from=${encodeURIComponent(fixedVal)}&to=${encodeURIComponent(targetVal)}`;
 
-        // 縦割りレイアウト用カード
+        // 縦長デザインの比較カード（1画面に3列入るレイアウト）
         const card = document.createElement("div");
-        card.className = "bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4";
+        card.className = "bg-[#101D36] rounded-xl p-2.5 border border-[#1E2E4A] shadow-xl flex flex-col justify-between items-center text-center relative overflow-hidden h-full min-h-[220px]";
         
         card.innerHTML = `
-          <!-- 乗車駅・目的地と矢印 -->
-          <div class="flex items-center gap-3 w-full sm:w-auto justify-center">
-            <div class="bg-white text-slate-950 font-bold py-1.5 px-3 rounded text-sm text-center min-w-[90px]">
-              ${fixedVal}
+          <!-- 上部：固定駅 -->
+          <div class="w-full bg-[#162542] text-white font-bold py-1.5 px-1 rounded border border-[#233554] text-xs truncate">
+            ${fixedVal}
+          </div>
+
+          <!-- 中央：矢印ガイド -->
+          <div class="my-1.5 flex flex-col items-center">
+            <i class="fa-solid fa-arrow-down text-[#D9AA32] text-xs"></i>
+          </div>
+
+          <!-- 下部：目的地駅 -->
+          <div class="w-full bg-[#162542] text-white font-bold py-1.5 px-1 rounded border border-[#233554] text-xs truncate">
+            ${targetVal}
+          </div>
+
+          <!-- 数値情報（金額 ＆ 時間） -->
+          <div class="my-2.5 w-full space-y-0.5">
+            <div class="text-base font-black text-[#F0C85A] tracking-tight">
+              ¥${routeData.fare}
             </div>
-            <div class="flex flex-col items-center">
-              <span class="text-xs font-bold text-emerald-400">${routeData.time}分</span>
-              <i class="fa-solid fa-arrow-right text-slate-400 text-sm hidden sm:inline"></i>
-              <i class="fa-solid fa-arrow-down text-slate-400 text-sm sm:hidden"></i>
-            </div>
-            <div class="bg-white text-slate-950 font-bold py-1.5 px-3 rounded text-sm text-center min-w-[90px]">
-              ${targetVal}
+            <div class="text-[11px] font-bold text-[#9AA8BF]">
+              ${routeData.time}分
             </div>
           </div>
 
-          <!-- 運賃と乗換案内リンク -->
-          <div class="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-t-0 border-slate-700 pt-3 sm:pt-0">
-            <div class="text-lg font-extrabold text-emerald-400">
-              ¥${routeData.fare}
-            </div>
-            <a href="${yahooUrl}" target="_blank" rel="noopener noreferrer" 
-              class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded transition flex items-center gap-1 shadow">
-              乗換案内を見る <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-            </a>
-          </div>
+          <!-- 外部乗換案内ボタン -->
+          <a href="${yahooUrl}" target="_blank" rel="noopener noreferrer" 
+            class="w-full text-[10px] font-extrabold bg-[#D9AA32] hover:bg-[#F0C85A] text-[#080F20] py-2 px-1 rounded transition duration-150 flex items-center justify-center gap-1 shadow leading-tight">
+            <span>乗換案内</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+          </a>
         `;
 
         cardsContainer.appendChild(card);
