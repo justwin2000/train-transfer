@@ -6,7 +6,7 @@
   <title>複数区間 運賃・時間比較</title>
   <!-- Tailwind CSS (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome (アイコン) -->
+  <!-- FontAwesome (アイコン用) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
@@ -34,7 +34,7 @@
       background-repeat: no-repeat;
     }
 
-    /* 横スクロールバー設定 */
+    /* 横スクロールバーのスタイル */
     .horizontal-scroll-container::-webkit-scrollbar {
       height: 6px;
     }
@@ -50,7 +50,7 @@
 </head>
 <body class="bg-[#080F20] text-slate-100 min-h-screen pb-12 font-sans relative overflow-x-hidden">
 
-  <!-- ヘッダー -->
+  <!-- ヘッダー（右上に赤斜め3本線） -->
   <header class="bg-[#0D1830] border-b border-[#1E2E4A] p-4 text-center shadow-xl relative z-10 bg-sports-accent-header">
     <h1 class="text-lg font-bold text-[#F0C85A] tracking-wider flex items-center justify-center gap-2 pr-8">
       <i class="fa-solid fa-route text-[#D9AA32]"></i>複数区間 運賃・時間比較
@@ -59,7 +59,7 @@
 
   <main class="max-w-md md:max-w-3xl mx-auto p-4 space-y-6 relative z-10">
 
-    <!-- 検索条件設定エリア -->
+    <!-- 条件設定エリア -->
     <section class="bg-[#101D36] rounded-xl p-5 border border-[#1E2E4A] shadow-2xl relative">
 
       <h2 class="text-sm font-bold text-[#F0C85A] uppercase tracking-wider mb-4 border-b border-[#1E2E4A] pb-2 flex items-center gap-2">
@@ -76,7 +76,7 @@
           class="w-full bg-[#080F20] border border-[#233554] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#D9AA32] font-bold text-base transition">
       </div>
 
-      <!-- よく使う駅 -->
+      <!-- よく使う駅（お気に入り機能） -->
       <div class="mb-5 bg-[#080F20]/60 p-3 rounded-lg border border-[#1E2E4A]">
         <div class="flex justify-between items-center mb-2">
           <label class="block text-xs font-bold text-[#F0C85A] tracking-wider flex items-center gap-1.5">
@@ -128,13 +128,12 @@
 
   <script>
     // お気に入り初期値＆ローカルストレージ設定
-    const defaultFavorites = ["西大橋", "心斎橋", "桜川", "ドーム前", "九条"];
+    const defaultFavorites = ["六甲", "灘", "桜川", "西大橋", "心斎橋"];
     let favoriteStations = JSON.parse(localStorage.getItem("fav_stations")) || defaultFavorites;
     let targetCount = 0;
 
     window.onload = () => {
       renderFavoriteChips();
-      // スクリーンショットの例に合わせて「六甲」「灘」「桜川」をデフォルト配置
       ["六甲", "灘", "桜川"].forEach(val => addTargetInput(val));
     };
 
@@ -215,46 +214,17 @@
       }
     }
 
-    // Yahoo!乗換案内アプリ/Webの検索結果ページを直接起動するURLを構築
-    function getYahooTransitUrl(fromStation, toStation) {
+    // Yahoo!路線情報のリアルタイム検索URL（検索結果画面に直接接続）
+    function openYahooTransit(fromStation, toStation) {
       const encodedFrom = encodeURIComponent(fromStation);
       const encodedTo = encodeURIComponent(toStation);
-      return `https://transit.yahoo.co.jp/transit_app/androidToBrowser.php?from=${encodedFrom}&to=${encodedTo}`;
+      // Yahoo!乗換案内の公式検索パラメータ付きURL
+      const url = `https://transit.yahoo.co.jp/search/result?from=${encodedFrom}&to=${encodedTo}`;
+      window.open(url, '_blank');
     }
 
-    function openYahooTransit(fromStation, toStation) {
-      window.open(getYahooTransitUrl(fromStation, toStation), '_blank');
-    }
-
-    // 外部乗換案内データ（またはバックエンドAPI）連携用の非同期取得関数
-    async function fetchRealRouteData(from, to) {
-      // ※ API連携用のモック/実際の検索エンドポイント呼出処理
-      // 全国全駅間を正確に計算するリアルタイム計算ロジック
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          // 主要経路の正確な運賃・所要時間・乗換回数マッピング例
-          const mockTable = {
-            "板宿-六甲": { fare: "520", time: "22", transfer: "1" },
-            "板宿-灘": { fare: "410", time: "19", transfer: "1" },
-            "板宿-桜川": { fare: "750", time: "56", transfer: "1" },
-            "新大阪-心斎橋": { fare: "240", time: "13", transfer: "0" },
-            "新大阪-西大橋": { fare: "240", time: "17", transfer: "1" },
-            "新大阪-九条": { fare: "290", time: "21", transfer: "1" }
-          };
-
-          const key = `${from}-${to}`;
-          if (mockTable[key]) {
-            resolve(mockTable[key]);
-          } else {
-            // その他の全区間の場合はWeb乗換案内URLへ連携
-            resolve({ fare: "乗換案内で確認", time: "--", transfer: "-" });
-          }
-        }, 150);
-      });
-    }
-
-    // 検索・カード生成処理
-    async function searchRoutes() {
+    // 検索・カード生成
+    function searchRoutes() {
       const fixedVal = document.getElementById("fixedStation").value.trim();
       const targetInputs = document.querySelectorAll(".target-input");
       const cardsContainer = document.getElementById("resultCards");
@@ -266,19 +236,15 @@
       }
 
       let count = 0;
-      for (let input of targetInputs) {
+      targetInputs.forEach(input => {
         const targetVal = input.value.trim();
-        if (!targetVal) continue;
+        if (!targetVal) return;
 
         count++;
-        // 正確な乗換案内データのリアルタイム取得
-        const route = await fetchRealRouteData(fixedVal, targetVal);
 
         const card = document.createElement("div");
-        card.className = "bg-[#101D36] rounded-xl p-2.5 border border-[#1E2E4A] shadow-xl flex flex-col justify-between items-center text-center relative overflow-hidden h-full min-h-[220px]";
+        card.className = "bg-[#101D36] rounded-xl p-3 border border-[#1E2E4A] shadow-xl flex flex-col justify-between items-center text-center relative overflow-hidden h-full min-h-[200px]";
         
-        const isNumericFare = !isNaN(route.fare);
-
         card.innerHTML = `
           <!-- 上部：固定駅 -->
           <div class="w-full bg-[#162542] text-white font-bold py-1.5 px-1 rounded border border-[#233554] text-xs truncate">
@@ -286,8 +252,8 @@
           </div>
 
           <!-- 中央：矢印 -->
-          <div class="my-1 flex flex-col items-center">
-            <i class="fa-solid fa-arrow-down text-[#D9AA32] text-xs"></i>
+          <div class="my-2 flex flex-col items-center">
+            <i class="fa-solid fa-arrow-down text-[#D9AA32] text-sm"></i>
           </div>
 
           <!-- 下部：目的地駅 -->
@@ -295,26 +261,23 @@
             ${targetVal}
           </div>
 
-          <!-- 実運賃・時間データ -->
-          <div class="my-2 w-full space-y-0.5">
-            <div class="text-base font-black text-[#F0C85A] tracking-tight">
-              ${isNumericFare ? `¥${route.fare}` : route.fare}
-            </div>
-            <div class="text-[11px] font-bold text-[#9AA8BF]">
-              ${route.time !== "--" ? `約${route.time}分` : "リアルタイム比較"}
+          <!-- アクション案内 -->
+          <div class="my-3 w-full">
+            <div class="text-[11px] font-bold text-[#F0C85A]">
+              ルート比較
             </div>
           </div>
 
-          <!-- 乗換案内（アプリ直接の検索結果へ遷移） -->
+          <!-- 乗換案内（タップでリアルタイム検索画面表示） -->
           <button onclick="openYahooTransit('${fixedVal}', '${targetVal}')" 
-            class="w-full text-[10px] font-extrabold bg-[#D9AA32] hover:bg-[#F0C85A] text-[#080F20] py-2 px-1 rounded transition duration-150 flex items-center justify-center gap-1 shadow leading-tight">
-            <span>乗換案内</span>
-            <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+            class="w-full text-[11px] font-extrabold bg-[#D9AA32] hover:bg-[#F0C85A] text-[#080F20] py-2.5 px-1 rounded transition duration-150 flex items-center justify-center gap-1.5 shadow leading-tight">
+            <span>検索結果を見る</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
           </button>
         `;
 
         cardsContainer.appendChild(card);
-      }
+      });
 
       if (count > 0) {
         document.getElementById("resultCount").innerText = `${count}件の比較`;
